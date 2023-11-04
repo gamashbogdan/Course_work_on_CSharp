@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
 namespace Course_work_on_CSharp
 {
@@ -69,7 +70,7 @@ namespace Course_work_on_CSharp
 
 
     #endregion
-    #region Запитання
+    #region Запитання для вікторини
     public class QuestionsCSharp
     {
         public string Questions { get; set; }
@@ -80,8 +81,25 @@ namespace Course_work_on_CSharp
             return $"\n\n{Questions}\n{Answers}";
         }
     }
+    public class Result
+    {
+
+        public string Login { get; set; }
+        public string Password { get; set; }
+        public int NumberOfIncorrectAnswers { get; set; }
+        public int NumberOfCorrectAnswers { get; set; }
+        public Result(string login, string password, int numberOfIncorrectAnswers, int numberOfCorrectAnswers)
+        {
+            Login = login;
+            Password = password;
+            NumberOfIncorrectAnswers = numberOfIncorrectAnswers;
+            NumberOfCorrectAnswers = numberOfCorrectAnswers;
+        }
+
+    }
     static class Quiz_Questions_About_CSharp
     {
+        static List<Result> resultsUser = new List<Result>();
         static List<QuestionsCSharp> questions = new List<QuestionsCSharp>()
         {
             new QuestionsCSharp
@@ -235,11 +253,18 @@ namespace Course_work_on_CSharp
                 ResponseIndex = new string[] { "A" },
             },
         };
-        static public int Quiz()
+        static public void Saving_Results(string login,string password,int numberOfIncorrectAnswers, int numberOfCorrectAnswers)
         {
-            int countTrue = 0;// рахує правильні відповіді
+            resultsUser.Add(new Result(login, password, numberOfIncorrectAnswers, numberOfCorrectAnswers));
+
+        }
+        static public void Quiz(string login, string password)
+        {
+            int correctQuestionsCounter = 0;// рахує правильні відповіді
+            int wrongAnswerCounter = 0;// рахує неправильні відповіді
             foreach (var item in questions)
             {
+                wrongAnswerCounter = questions.Count;
                 Console.WriteLine(item.Questions); // Виводимо питання на консоль
 
                 for (int i = 0; i < item.Answers.Length; i++)
@@ -260,13 +285,34 @@ namespace Course_work_on_CSharp
                         }
                         if (lenght == item.ResponseIndex.Length)
                         {
-                            countTrue++;
+                            correctQuestionsCounter++;
                         }
                     }
                 }
                 Console.WriteLine(); // Додаємо порожній рядок між питаннями
             }
-            return countTrue;
+            wrongAnswerCounter -= correctQuestionsCounter;
+            Saving_Results(login, password, correctQuestionsCounter, wrongAnswerCounter);
+            Saving_Results_To_File();
+        }
+        static void Saving_Results_To_File()
+        {
+            // Серіалізація та збереження даних користувачів в файл
+            if (resultsUser.Count > 0)
+            {
+                XmlSerializer formatter = new XmlSerializer(typeof(List<Result>));
+                try
+                {
+                    using (Stream fs = File.Create("list_of_user_results.xml"))
+                    {
+                        formatter.Serialize(fs, resultsUser);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
         }
     }
     #endregion
@@ -308,7 +354,7 @@ namespace Course_work_on_CSharp
             }
         }
         #region Вхід користувача
-        static bool Check_For_Uniqueness_Upon_Entry(string login, string pasword)
+        static bool Check_For_Uniqueness_Upon_Entry(string login, string password)
         {
             int choice;
             bool isValid = false;
@@ -329,7 +375,7 @@ namespace Course_work_on_CSharp
                 {
                     foreach (User user in loadedUsers)
                     {
-                        if (user.Login == login && user.Password == pasword)
+                        if (user.Login == login && user.Password == password)
                         {
                             Console.WriteLine("ви успішно увійшли");
                             isValid = true;
@@ -360,8 +406,8 @@ namespace Course_work_on_CSharp
             Console.Write("Введіть Login : ");
             string login = Console.ReadLine();
             Console.Write("Введіть Password : ");
-            string pasword = Console.ReadLine();
-            if (Check_For_Uniqueness_Upon_Entry(login, pasword))
+            string password = Console.ReadLine();
+            if (Check_For_Uniqueness_Upon_Entry(login, password))
             {
                 while (isRunning)
                 {
@@ -376,6 +422,7 @@ namespace Course_work_on_CSharp
                     switch (choice)
                     {
                         case 1:
+                            Quiz_Questions_About_CSharp.Quiz(login, password);
                             break;
                         case 2:
                             break;
