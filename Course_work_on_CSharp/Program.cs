@@ -40,11 +40,11 @@ namespace Course_work_on_CSharp
     {
         [Required(ErrorMessage = "Логін не вказаний")]
         //[UniquenessСheck(ErrorMessage = "Логін не унікальний")]
-        [RegularExpression(@"^[a-zA-Z0-9]+$", ErrorMessage = "Логін має містити лише літери і цифри")]
+        [RegularExpression(@"^[a-zA-Z0-9 +]+$", ErrorMessage = "Логін має містити лише літери і цифри")]
         public string Login { get; set; }// ллогін користувача 
 
         [Required(ErrorMessage = "Пароль не вказаний")]
-        [RegularExpression(@"^[a-zA-Z0-9*$_-]+$", ErrorMessage = "Пароль може містити лише літери, цифри, *, $, _, -")]
+        [RegularExpression(@"^[a-zA-Z0-9*$_-]+$", ErrorMessage = "Пароль може містити лише літери, цифри, *, $, _, -, без пробілів")]
         [MinLength(8, ErrorMessage = "Пароль повинен бути принаймні 8 символів")]
         public string Password { get; set; }
 
@@ -81,8 +81,8 @@ namespace Course_work_on_CSharp
             while (isRunning)
             {
                 Console.WriteLine("1. Зареєструватися");
-                Console.WriteLine("2. вивести всіх користувачив");
-                Console.WriteLine("3. Deserialize and load user data");
+                Console.WriteLine("2. Вхід");
+                Console.WriteLine("3. вивести всіх користувачив");
                 Console.WriteLine("4. Exit");
 
                 int choice = int.Parse(Console.ReadLine());
@@ -93,9 +93,10 @@ namespace Course_work_on_CSharp
                         RegisterUser();
                         break;
                     case 2:
-                        DeserializeAndLoadUserData();
+                        login_User();
                         break;
                     case 3:
+                        DeserializeAndLoadUserData();
                         break;
                     case 4:
                         isRunning = false;
@@ -106,7 +107,99 @@ namespace Course_work_on_CSharp
                 }
             }
         }
-        static string IsLoginUnique()
+        static bool Check_For_Uniqueness_Upon_Entry(string login, string pasword)
+        {
+            int choice;
+            bool isValid = false;
+            if (File.Exists("quiz_user_list.xml"))
+            {
+                XmlSerializer formatter = new XmlSerializer(typeof(List<User>));
+                List<User> loadedUsers = null;
+
+                using (Stream fs = File.OpenRead("quiz_user_list.xml"))
+                {
+                    // Додати перевірку на null
+                    if (fs.Length > 0)
+                    {
+                        loadedUsers = (List<User>)formatter.Deserialize(fs);
+                    }
+                }
+                if (loadedUsers != null)
+                {
+                    foreach (User user in loadedUsers)
+                    {
+                        if (user.Login == login && user.Password == pasword)
+                        {
+                            Console.WriteLine("ви успішно увійшли");
+                            isValid = true;
+                        }
+                    }
+                }
+            }
+            if (!isValid)
+            {
+                Console.WriteLine("Такого користувача не знайдено :(");
+                Console.WriteLine("Спробувати ще раз\n\t1 - Так\n\t2 - Ні");
+                choice = int.Parse(Console.ReadLine());
+                if (choice==1)
+                {
+                    login_User();
+                }
+                else if (choice==2)
+                {
+                    RegisterUser();
+                }
+                return false;
+            }
+            return true;
+        }
+        static void login_User()
+        {
+            bool isRunning = true;
+            Console.Write("Введіть Login : ");
+            string login = Console.ReadLine();
+            Console.Write("Введіть Password : ");
+            string pasword = Console.ReadLine();
+            if (Check_For_Uniqueness_Upon_Entry(login, pasword))
+            {
+                while (isRunning)
+                {
+                    Console.WriteLine("1. стартувати нову вікторину");
+                    Console.WriteLine("2. переглянути результати своїх минулих вікторин");
+                    Console.WriteLine("3. переглянути Топ-20 з конкретної вікторини");
+                    Console.WriteLine("4. змінити налаштування: можна змінювати пароль та дату народження");
+                    Console.WriteLine("5. вихід");
+
+                    int choice = int.Parse(Console.ReadLine());
+
+                    switch (choice)
+                    {
+                        case 1:
+                            break;
+                        case 2:
+                            break;
+                        case 3:
+                            break;
+                        case 4:
+                            break;
+                        case 5:
+                            isRunning = false;
+                            break;
+                        default:
+                            Console.WriteLine("Invalid choice. Please select a valid option.");
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                RegisterUser();
+            }
+
+        }
+
+        #region Реєстрація користувача
+        static string Check_For_Uniqueness_At_Registration()// Перевірка на унікальність логіна при реєстрації
         {
             string login = Console.ReadLine();
             if (File.Exists("quiz_user_list.xml"))
@@ -122,7 +215,6 @@ namespace Course_work_on_CSharp
                         loadedUsers = (List<User>)formatter.Deserialize(fs);
                     }
                 }
-
                 if (loadedUsers != null)
                 {
                     foreach (User user in loadedUsers)
@@ -130,23 +222,22 @@ namespace Course_work_on_CSharp
                         if (user.Login == login)
                         {
                             Console.WriteLine("Користувач з таким логіном вже існує. Будь ласка, виберіть інший логін.");
-                            return IsLoginUnique(); // Рекурсивний виклик, щоб вибрати інший логін
+                            return Check_For_Uniqueness_At_Registration(); // Рекурсивний виклик, щоб вибрати інший логін
                         }
                     }
                 }
             }
             return login;
         }
-
-
         static void RegisterUser()
         {
             User newUser = new User();
             bool isValid;
             do
             {
+                Console.WriteLine("Меню реєстрації користувачів вікторини");
                 Console.Write("Введіть Login : ");
-                newUser.Login = IsLoginUnique();
+                newUser.Login = Check_For_Uniqueness_At_Registration();
 
                 Console.Write("Введіть Password : ");
                 newUser.Password = Console.ReadLine();
@@ -180,8 +271,9 @@ namespace Course_work_on_CSharp
             // Generate a unique Id and add the user to the dictionary
             users.Add(newUser);
             SerializeAndSaveUserData();
-            Console.WriteLine("User registered successfully.");
+            Console.WriteLine("Користувач успішно зареєстрований.");
         }
+        #endregion
         static void SerializeAndSaveUserData()
         {
             // Серіалізація та збереження даних користувачів в файл
@@ -207,7 +299,7 @@ namespace Course_work_on_CSharp
             }
 
         }
-        static void DeserializeAndLoadUserData()
+        static void DeserializeAndLoadUserData()// вивід інформації з файлу
         {
             if (File.Exists("quiz_user_list.xml"))
             {
@@ -221,8 +313,6 @@ namespace Course_work_on_CSharp
                 foreach (User item in loadUsers)
                 {
                     Console.WriteLine($"Login: {item.Login}");
-                    Console.WriteLine($"Password: {item.Password}");
-                    Console.WriteLine($"Confirm Password: {item.ConfirmPassword}");
                     Console.WriteLine($"Data : {item.Data.Year}.{item.Data.Month}.{item.Data.Day}");
                     Console.WriteLine();
                 }
