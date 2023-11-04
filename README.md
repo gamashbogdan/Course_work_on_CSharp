@@ -1,1 +1,1 @@
-# Course_work_on_CSharp
+# Тема курсової роботи "Віктори на тему CSharp"
