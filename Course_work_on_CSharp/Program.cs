@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Xml.Serialization;
 namespace Course_work_on_CSharp
 {
@@ -55,6 +54,14 @@ namespace Course_work_on_CSharp
         [DataType(DataType.Date, ErrorMessage = "Невірний формат дати")]
         [DateOfBirth(ErrorMessage = "Дата народження не може бути більшою за поточний час")]
         public DateTime Data { get; set; }
+        public void ChangePassword(string newPassword)
+        {
+            Password = newPassword;
+        }
+        public void ChangeDateOfBirth(DateTime newDateOfBirth)
+        {
+            Data = newDateOfBirth;
+        }
     }
     public class DateOfBirthAttribute : ValidationAttribute// написав chatGPT
     {
@@ -119,7 +126,7 @@ namespace Course_work_on_CSharp
             new QuestionsCSharp
             {
                 Questions = "3. Чи можливо зробити декомпіляцію виконувального файлу (.exe) додатка написаного на мові C#?",
-                Answers = new string[] { "A. Так", "B. Ні" },
+                Answers = new string[] { "   A. Так", "   B. Ні" },
                 ResponseIndex = new string[] { "A" },
             },
             new QuestionsCSharp
@@ -173,7 +180,7 @@ namespace Course_work_on_CSharp
             new QuestionsCSharp
             {
                 Questions = "12. Що таке Boxing і Unboxing?",
-                Answers = new string[] { "A. Boxing - перетворення value-типу в reference-тип (наприклад, int в object), Unboxing - перетворення reference-типу назад в value-тип","B. Boxing і Unboxing відносяться до збору сміття (GC) і не використовуються в C#."},
+                Answers = new string[] { "   A. Boxing - перетворення value-типу в reference-тип (наприклад, int в object), Unboxing - перетворення reference-типу назад в value-тип", "   B. Boxing і Unboxing відносяться до збору сміття (GC) і не використовуються в C#."},
                 ResponseIndex = new string[] { "A" },
             },
             new QuestionsCSharp
@@ -258,7 +265,6 @@ namespace Course_work_on_CSharp
         static public void Saving_Results(string login,string password,int numberOfCorrectAnswers, int numberOfIncorrectAnswers)
         {
             resultsUser.Add(new Result(login, password, numberOfCorrectAnswers, numberOfIncorrectAnswers));
-
         }
         
         static public void Quiz(string login, string password)
@@ -267,14 +273,15 @@ namespace Course_work_on_CSharp
             int wrongAnswerCounter = 0;// рахує неправильні відповіді
             foreach (var item in questions)
             {
+                Console.Clear();
                 wrongAnswerCounter = questions.Count;
-                Console.WriteLine(item.Questions); // Виводимо питання на консоль
+                Console.WriteLine("\n\t"+item.Questions); // Виводимо питання на консоль
 
                 for (int i = 0; i < item.Answers.Length; i++)
                 {
-                    Console.WriteLine($"  {item.Answers[i]}"); // Виводимо варіанти відповідей
+                    Console.WriteLine($"\t {item.Answers[i]}"); // Виводимо варіанти відповідей
                 }
-                Console.Write("Enter answer : ");
+                Console.Write("\n\tВведіть відповідь : ");
                 string answer = Console.ReadLine();
                 int lenght = 0;
                 for (int j = 0; j < item.ResponseIndex.Length; j++)
@@ -295,12 +302,12 @@ namespace Course_work_on_CSharp
                 Console.WriteLine(); // Додаємо порожній рядок між питаннями
             }
             wrongAnswerCounter -= correctQuestionsCounter;
+            Console.WriteLine($"\n\tВаші результати\n\t\tПравильних відповідей : [{correctQuestionsCounter}]\n\t\tНеправильних відповідей : [{wrongAnswerCounter}]") ;
             Saving_Results(login, password, correctQuestionsCounter, wrongAnswerCounter);
             Saving_Results_To_File();
         }
-        static void Saving_Results_To_File()
+        static void Saving_Results_To_File()// Серіалізація та збереження даних користувачів в файл
         {
-            // Серіалізація та збереження даних користувачів в файл
             if (resultsUser.Count > 0)
             {
                 try
@@ -317,24 +324,22 @@ namespace Course_work_on_CSharp
                 }
             }
         }
-        
-
     }
     #endregion
     internal class Program
     {
         static List<User> users = new List<User>();
-        static void Main(string[] args)
+        static void Main(string[] args)// Головне меню
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             bool isRunning = true;
 
             while (isRunning)
             {
-                Console.WriteLine("1. Зареєструватися");
-                Console.WriteLine("2. Вхід");
-                Console.WriteLine("3. вивести всіх користувачив");
-                Console.WriteLine("0. Exit");
+                Console.WriteLine("\n\t1. Зареєструватися");
+                Console.WriteLine("\t2. Вхід");
+                Console.WriteLine("\t3. вивести всіх користувачив");
+                Console.WriteLine("\t0. Exit");
 
                 int choice = int.Parse(Console.ReadLine());
 
@@ -353,13 +358,13 @@ namespace Course_work_on_CSharp
                         isRunning = false;
                         break;
                     default:
-                        Console.WriteLine("Invalid choice. Please select a valid option.");
+                        Console.WriteLine("\nНевірний вибір. Виберіть дійсний варіант..");
                         break;
                 }
             }
         }
         #region Вхід користувача
-        static bool Check_For_Uniqueness_Upon_Entry(string login, string password)
+        static bool Check_For_Uniqueness_Upon_Entry(string login, string password)// перевіряє з файлу чи такій користувач реєструвався 
         {
             int choice;
             bool isValid = false;
@@ -382,7 +387,7 @@ namespace Course_work_on_CSharp
                     {
                         if (user.Login == login && user.Password == password)
                         {
-                            Console.WriteLine("ви успішно увійшли");
+                            Console.WriteLine("\n\tВи успішно увійшли");
                             isValid = true;
                         }
                     }
@@ -390,8 +395,8 @@ namespace Course_work_on_CSharp
             }
             if (!isValid)
             {
-                Console.WriteLine("Такого користувача не знайдено :(");
-                Console.WriteLine("Спробувати ще раз\n\t1 - Так\n\t2 - Ні");
+                Console.WriteLine("\n\tТакого користувача не знайдено :(");
+                Console.WriteLine("\tСпробувати ще раз\n\t\t1 - Так\n\t\t2 - Ні");
                 choice = int.Parse(Console.ReadLine());
                 if (choice == 1)
                 {
@@ -405,22 +410,22 @@ namespace Course_work_on_CSharp
             }
             return true;// якщо користувача знайдено то функція повертає true і користувачу відкривається меню вікторини
         }
-        static void login_User()
+        static void login_User()// вхід користувача для доступу до вікторини
         {
             bool isRunning = true;
-            Console.Write("Введіть Login : ");
+            Console.Write("\t\tВведіть Login : ");
             string login = Console.ReadLine();
-            Console.Write("Введіть Password : ");
+            Console.Write("\t\tВведіть Password : ");
             string password = Console.ReadLine();
             if (Check_For_Uniqueness_Upon_Entry(login, password))
             {
                 while (isRunning)
                 {
-                    Console.WriteLine("1. стартувати нову вікторину");
-                    Console.WriteLine("2. переглянути результати своїх минулих вікторин");
-                    Console.WriteLine("3. переглянути Топ-20 з конкретної вікторини");
-                    Console.WriteLine("4. змінити налаштування: можна змінювати пароль та дату народження");
-                    Console.WriteLine("5. вихід");
+                    Console.WriteLine("\n\t1. стартувати нову вікторину");
+                    Console.WriteLine("\t2. переглянути результати своїх минулих вікторин");
+                    Console.WriteLine("\t3. переглянути Топ-20 з конкретної вікторини");
+                    Console.WriteLine("\t4. змінити налаштування: можна змінювати пароль та дату народження");
+                    Console.WriteLine("\t5. вихід");
 
                     int choice = int.Parse(Console.ReadLine());
 
@@ -436,22 +441,97 @@ namespace Course_work_on_CSharp
                             Top_Quiz_Results();
                             break;
                         case 4:
+                            bool isValidData = false;
+                            bool isValidPassword = false;
+                            string newPassword = "";
+                            do
+                            {
+                                Console.WriteLine("\tВведіть новий пароль : ");
+                                newPassword = Console.ReadLine();
+                                if (newPassword.Length>=8)
+                                {
+                                    isValidPassword = true;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("\tПароль має бути більше 8 символів");
+                                }
+                            } while (!isValidPassword);
+                            Console.WriteLine("\tВедіть нову дату народження : ");
+                            DateTime newData;
+                            do
+                            {
+                                if (DateTime.TryParse(Console.ReadLine(), out DateTime dateOfBirth)&& dateOfBirth <= DateTime.Now)
+                                {
+                                    newData = dateOfBirth;
+                                    isValidData = true;
+                                    EditUserFromFile(login, newPassword, newData);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("\tНеправильний формат дати. Введіть в такому форматі yyyy-MM-dd. і дата не може буди більшою за сьогоднішній час");
+                                }
+                            } while (!isValidData);
                             break;
                         case 5:
                             isRunning = false;
                             break;
                         default:
-                            Console.WriteLine("Invalid choice. Please select a valid option.");
+                            Console.WriteLine("\tНевірний вибір. Виберіть дійсний варіант.");
                             break;
                     }
                 }
             }
         }
+        static void EditUserFromFile(string login, string newPassword, DateTime newDateOfBirth)// редагує інформацію про користувача
+        {
+            // Завантаження даних користувачів з файлу
+            List<User> users = new List<User>();
+            XmlSerializer formatter = new XmlSerializer(typeof(List<User>));
+            try
+            {
+                using (Stream fs = File.OpenRead("quiz_user_list.xml"))
+                {
+                    users = (List<User>)formatter.Deserialize(fs);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            // Редагування користувача
+            User userToEdit = users.Find(u => u.Login == login);
+            if (userToEdit != null)
+            {
+                userToEdit.ChangePassword(newPassword);
+                userToEdit.ChangeDateOfBirth(newDateOfBirth);
+            }
+            else
+            {
+                Console.WriteLine("\n\tКористувача не знайдено.");
+            }
+
+            // Серіалізація та збереження даних користувачів в файл
+            try
+            {
+                using (Stream fs = File.Create("quiz_user_list.xml"))
+                {
+                    formatter.Serialize(fs, users);
+                }
+                Console.WriteLine("\n\n\tДані користувача було відредаговано, серіалізовано та збережено.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
         #endregion
         #region Реєстрація користувача
         static string Check_For_Uniqueness_At_Registration()// Перевірка на унікальність логіна при реєстрації
         {
-            Console.Write("Введіть Login : ");
+            Console.Write("\tВведіть Login : ");
             string login = Console.ReadLine();
             if (File.Exists("quiz_user_list.xml"))
             {
@@ -472,7 +552,7 @@ namespace Course_work_on_CSharp
                     {
                         if (user.Login == login)
                         {
-                            Console.WriteLine("Користувач з таким логіном вже існує. Будь ласка, виберіть інший логін.");
+                            Console.WriteLine("\n\tКористувач з таким логіном вже існує. Будь ласка, виберіть інший логін.");
                             return Check_For_Uniqueness_At_Registration(); // Рекурсивний виклик, щоб вибрати інший логін
                         }
                     }
@@ -480,30 +560,30 @@ namespace Course_work_on_CSharp
             }
             return login;
         }
-        static void RegisterUser()
+        static void RegisterUser()// реєстрація користувача
         {
             User newUser = new User();
             bool isValid;
             do
             {
-                Console.WriteLine("Меню реєстрації користувачів вікторини");
+                Console.WriteLine("\n\n\tМеню реєстрації користувачів вікторини");
                 
                 newUser.Login = Check_For_Uniqueness_At_Registration();
 
-                Console.Write("Введіть Password : ");
+                Console.Write("\tВведіть Password : ");
                 newUser.Password = Console.ReadLine();
 
-                Console.Write("Підтвердіть Password : ");
+                Console.Write("\tПідтвердіть Password : ");
                 newUser.ConfirmPassword = Console.ReadLine();
 
-                Console.Write("Введіть дату народження (yyyy-MM-dd) : ");
+                Console.Write("\tВведіть дату народження (yyyy-MM-dd) : ");
                 if (DateTime.TryParse(Console.ReadLine(), out DateTime dateOfBirth))
                 {
                     newUser.Data = dateOfBirth;
                 }
                 else
                 {
-                    Console.WriteLine("Неправильний формат дати. Введіть в такому форматі yyyy-MM-dd.");
+                    Console.WriteLine("\n\tНеправильний формат дати. Введіть в такому форматі yyyy-MM-dd.");
                 }
 
                 var result = new List<ValidationResult>();
@@ -522,35 +602,10 @@ namespace Course_work_on_CSharp
             // Generate a unique Id and add the user to the dictionary
             users.Add(newUser);
             SerializeAndSaveUserData();
-            Console.WriteLine("Користувач успішно зареєстрований.");
+            Console.WriteLine("\n\tКористувач успішно зареєстрований.");
         }
         #endregion
-        static void SerializeAndSaveUserData()
-        {
-            // Серіалізація та збереження даних користувачів в файл
-            if (users.Count > 0)
-            {
-                XmlSerializer formatter = new XmlSerializer(typeof(List<User>));
-                try
-                {
-                    using (Stream fs = File.Create("quiz_user_list.xml"))
-                    {
-                        formatter.Serialize(fs, users);
-                    }
-                    Console.WriteLine("User data has been serialized and saved.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
-            else
-            {
-                Console.WriteLine("No user data to save.");
-            }
-
-        }
-        static void Top_Quiz_Results()
+        static void Top_Quiz_Results()// топ гравців вікторини
         {
             if (File.Exists("list_of_user_results.xml"))
             {
@@ -566,21 +621,20 @@ namespace Course_work_on_CSharp
                 foreach (var item in resultTop)
                 {
                     i++;
-                    Console.WriteLine($"Top number {i}");
-                    Console.WriteLine($"Login: {item.Login}");
-                    Console.WriteLine($"NumberOfCorrectAnswers: {item.NumberOfCorrectAnswers}");
-                    Console.WriteLine($"NumberOfIncorrectAnswers: {item.NumberOfIncorrectAnswers}");
-                    Console.WriteLine($"Data : {item.EndDate.Year}.{item.EndDate.Month}.{item.EndDate.Day}, {item.EndDate.Hour}:{item.EndDate.Minute}:{item.EndDate.Second}");
+                    Console.WriteLine($"\n\n\tTop {i}");
+                    Console.WriteLine($"\tГравець : {item.Login}");
+                    Console.WriteLine($"\tКількість правильких відповідей : {item.NumberOfCorrectAnswers}");
+                    Console.WriteLine($"\tКількість неправильких відповідей : {item.NumberOfIncorrectAnswers}");
+                    Console.WriteLine($"\tДата проходження вікторини : {item.EndDate.Year}.{item.EndDate.Month}.{item.EndDate.Day}, {item.EndDate.Hour}:{item.EndDate.Minute}:{item.EndDate.Second}");
                     Console.WriteLine();
                 }
-                Console.WriteLine("User data has been deserialized and loaded.");
             }
             else
             {
-                Console.WriteLine("User data file not found.");
+                Console.WriteLine("\n\tФайл даних користувача не знайдено.");
             }
         }
-        static void Deserialize_Results_File(string login)// вивід інформації з файлу
+        static void Deserialize_Results_File(string login)// вивід інформації з файлу про результати вікторини
         {
             if (File.Exists("list_of_user_results.xml"))
             {
@@ -595,21 +649,44 @@ namespace Course_work_on_CSharp
                 {
                     if (item.Login==login)
                     {
-                        Console.WriteLine($"Login: {item.Login}");
-                        Console.WriteLine($"NumberOfCorrectAnswers: {item.NumberOfCorrectAnswers}");
-                        Console.WriteLine($"NumberOfIncorrectAnswers: {item.NumberOfIncorrectAnswers}");
-                        Console.WriteLine($"Data : {item.EndDate.Year}.{item.EndDate.Month}.{item.EndDate.Day}, {item.EndDate.Hour}:{item.EndDate.Minute}:{item.EndDate.Second}");
+                        Console.WriteLine($"\n\n\tГравець: {item.Login}");
+                        Console.WriteLine($"\tКількість правильких відповідей : {item.NumberOfCorrectAnswers}");
+                        Console.WriteLine($"\tКількість неправильких відповідей : {item.NumberOfIncorrectAnswers}");
+                        Console.WriteLine($"\tДата закінчення вікторини : {item.EndDate.Year}.{item.EndDate.Month}.{item.EndDate.Day}, {item.EndDate.Hour}:{item.EndDate.Minute}:{item.EndDate.Second}");
                         Console.WriteLine();
                     }
                 }
-                Console.WriteLine("User data has been deserialized and loaded.");
             }
             else
             {
-                Console.WriteLine("User data file not found.");
+                Console.WriteLine("\n\tФайл даних користувача не знайдено..");
             }
         }
-        static void DeserializeAndLoadUserData()// вивід інформації з файлу
+        static void SerializeAndSaveUserData()// збереження інформації про всіх користувачив
+        {
+            // Серіалізація та збереження даних користувачів в файл
+            if (users.Count > 0)
+            {
+                XmlSerializer formatter = new XmlSerializer(typeof(List<User>));
+                try
+                {
+                    using (Stream fs = File.Create("quiz_user_list.xml"))
+                    {
+                        formatter.Serialize(fs, users);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+            else
+            {
+                Console.WriteLine("\n\tНемає даних користувача для збереження.");
+            }
+
+        }
+        static void DeserializeAndLoadUserData()// вивід інформації з файлу про всіх користувачив
         {
             if (File.Exists("quiz_user_list.xml"))
             {
@@ -622,22 +699,18 @@ namespace Course_work_on_CSharp
                 }
                 foreach (User item in loadUsers)
                 {
-                    Console.WriteLine($"Login: {item.Login}");
-                    Console.WriteLine($"Data : {item.Data.Year}.{item.Data.Month}.{item.Data.Day}");
+                    Console.WriteLine($"\n\n\tLogin: {item.Login}");
+                    Console.WriteLine($"\tData : {item.Data.Year}.{item.Data.Month}.{item.Data.Day}");
                     Console.WriteLine();
                 }
-
-
-                Console.WriteLine("User data has been deserialized and loaded.");
             }
             else
             {
-                Console.WriteLine("User data file not found.");
+                Console.WriteLine("\n\tФайл даних користувача не знайдено.");
             }
         }
-
     }
-    public class ResultComparer : IComparer<Result>
+    public class ResultComparer : IComparer<Result> // ця функція для порівнння 2 гравців для функції Top_Quiz_Results()
     {
         public int Compare(Result x, Result y)
         {
@@ -651,6 +724,5 @@ namespace Course_work_on_CSharp
             return 0;
         }
     }
-
 }
 
