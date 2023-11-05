@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography.X509Certificates;
+using System.Linq;
 using System.Xml.Serialization;
 namespace Course_work_on_CSharp
 {
@@ -76,10 +76,6 @@ namespace Course_work_on_CSharp
         public string Questions { get; set; }
         public string[] Answers { get; set; }
         public string[] ResponseIndex { get; set; }
-        public override string ToString()
-        {
-            return $"\n\n{Questions}\n{Answers}";
-        }
     }
     public class Result
     {
@@ -88,12 +84,18 @@ namespace Course_work_on_CSharp
         public string Password { get; set; }
         public int NumberOfIncorrectAnswers { get; set; }
         public int NumberOfCorrectAnswers { get; set; }
-        public Result(string login, string password, int numberOfIncorrectAnswers, int numberOfCorrectAnswers)
+        public DateTime EndDate { get; set; }
+        public Result()
+        {
+        }
+        public Result(string login, string password, int numberOfCorrectAnswers , int numberOfIncorrectAnswers)
         {
             Login = login;
             Password = password;
-            NumberOfIncorrectAnswers = numberOfIncorrectAnswers;
             NumberOfCorrectAnswers = numberOfCorrectAnswers;
+            NumberOfIncorrectAnswers = numberOfIncorrectAnswers;
+            EndDate= DateTime.Now;
+
         }
 
     }
@@ -253,11 +255,12 @@ namespace Course_work_on_CSharp
                 ResponseIndex = new string[] { "A" },
             },
         };
-        static public void Saving_Results(string login,string password,int numberOfIncorrectAnswers, int numberOfCorrectAnswers)
+        static public void Saving_Results(string login,string password,int numberOfCorrectAnswers, int numberOfIncorrectAnswers)
         {
-            resultsUser.Add(new Result(login, password, numberOfIncorrectAnswers, numberOfCorrectAnswers));
+            resultsUser.Add(new Result(login, password, numberOfCorrectAnswers, numberOfIncorrectAnswers));
 
         }
+        
         static public void Quiz(string login, string password)
         {
             int correctQuestionsCounter = 0;// рахує правильні відповіді
@@ -300,9 +303,9 @@ namespace Course_work_on_CSharp
             // Серіалізація та збереження даних користувачів в файл
             if (resultsUser.Count > 0)
             {
-                XmlSerializer formatter = new XmlSerializer(typeof(List<Result>));
                 try
                 {
+                    XmlSerializer formatter = new XmlSerializer(typeof(List<Result>));
                     using (Stream fs = File.Create("list_of_user_results.xml"))
                     {
                         formatter.Serialize(fs, resultsUser);
@@ -314,6 +317,8 @@ namespace Course_work_on_CSharp
                 }
             }
         }
+        
+
     }
     #endregion
     internal class Program
@@ -396,9 +401,9 @@ namespace Course_work_on_CSharp
                 {
                     RegisterUser();
                 }
-                return false;
+                return false;// якщо користувача не знайдено то функція повертає false і користувача перекідає на реєстрацію
             }
-            return true;
+            return true;// якщо користувача знайдено то функція повертає true і користувачу відкривається меню вікторини
         }
         static void login_User()
         {
@@ -425,8 +430,10 @@ namespace Course_work_on_CSharp
                             Quiz_Questions_About_CSharp.Quiz(login, password);
                             break;
                         case 2:
+                            Deserialize_Results_File(login);
                             break;
                         case 3:
+                            Top_Quiz_Results();
                             break;
                         case 4:
                             break;
@@ -439,16 +446,14 @@ namespace Course_work_on_CSharp
                     }
                 }
             }
-            else
-            {
-                RegisterUser();
-            }
+            
 
         }
         #endregion
         #region Реєстрація користувача
         static string Check_For_Uniqueness_At_Registration()// Перевірка на унікальність логіна при реєстрації
         {
+            Console.Write("Введіть Login : ");
             string login = Console.ReadLine();
             if (File.Exists("quiz_user_list.xml"))
             {
@@ -484,7 +489,7 @@ namespace Course_work_on_CSharp
             do
             {
                 Console.WriteLine("Меню реєстрації користувачів вікторини");
-                Console.Write("Введіть Login : ");
+                
                 newUser.Login = Check_For_Uniqueness_At_Registration();
 
                 Console.Write("Введіть Password : ");
@@ -547,6 +552,65 @@ namespace Course_work_on_CSharp
             }
 
         }
+        static void Top_Quiz_Results()
+        {
+            if (File.Exists("list_of_user_results.xml"))
+            {
+                // Десеріалізація та завантаження даних користувачів з файлу
+                int i = 0;
+                XmlSerializer formatter = new XmlSerializer(typeof(List<Result>));
+                List<Result> loadUsers = null;
+                using (Stream fs = File.OpenRead("list_of_user_results.xml"))
+                {
+                    loadUsers = (List<Result>)formatter.Deserialize(fs);
+                }
+                var resultTop = loadUsers.OrderByDescending(i => i, new ResultComparer()).Take(20);
+                foreach (var item in resultTop)
+                {
+                    i++;
+                    Console.WriteLine($"Top number {i}");
+                    Console.WriteLine($"Login: {item.Login}");
+                    Console.WriteLine($"NumberOfCorrectAnswers: {item.NumberOfCorrectAnswers}");
+                    Console.WriteLine($"NumberOfIncorrectAnswers: {item.NumberOfIncorrectAnswers}");
+                    Console.WriteLine($"Data : {item.EndDate.Year}.{item.EndDate.Month}.{item.EndDate.Day}, {item.EndDate.Hour}:{item.EndDate.Minute}:{item.EndDate.Second}");
+                    Console.WriteLine();
+                }
+                Console.WriteLine("User data has been deserialized and loaded.");
+            }
+            else
+            {
+                Console.WriteLine("User data file not found.");
+            }
+        }
+        static void Deserialize_Results_File(string login)// вивід інформації з файлу
+        {
+            if (File.Exists("list_of_user_results.xml"))
+            {
+                // Десеріалізація та завантаження даних користувачів з файлу
+                XmlSerializer formatter = new XmlSerializer(typeof(List<Result>));
+                List<Result> loadUsers = null;
+                using (Stream fs = File.OpenRead("list_of_user_results.xml"))
+                {
+                    loadUsers = (List<Result>)formatter.Deserialize(fs);
+                }
+                foreach (Result item in loadUsers)
+                {
+                    if (item.Login==login)
+                    {
+                        Console.WriteLine($"Login: {item.Login}");
+                        Console.WriteLine($"NumberOfCorrectAnswers: {item.NumberOfCorrectAnswers}");
+                        Console.WriteLine($"NumberOfIncorrectAnswers: {item.NumberOfIncorrectAnswers}");
+                        Console.WriteLine($"Data : {item.EndDate.Year}.{item.EndDate.Month}.{item.EndDate.Day}, {item.EndDate.Hour}:{item.EndDate.Minute}:{item.EndDate.Second}");
+                        Console.WriteLine();
+                    }
+                }
+                Console.WriteLine("User data has been deserialized and loaded.");
+            }
+            else
+            {
+                Console.WriteLine("User data file not found.");
+            }
+        }
         static void DeserializeAndLoadUserData()// вивід інформації з файлу
         {
             if (File.Exists("quiz_user_list.xml"))
@@ -575,5 +639,20 @@ namespace Course_work_on_CSharp
         }
 
     }
+    public class ResultComparer : IComparer<Result>
+    {
+        public int Compare(Result x, Result y)
+        {
+            // Додайте тут логіку порівняння двох об'єктів Result
+            // Наприклад, в порядку спадання NumberOfCorrectAnswers
+
+            if (x.NumberOfCorrectAnswers < y.NumberOfCorrectAnswers)
+                return -1;
+            if (x.NumberOfCorrectAnswers > y.NumberOfCorrectAnswers)
+                return 1;
+            return 0;
+        }
+    }
+
 }
 
