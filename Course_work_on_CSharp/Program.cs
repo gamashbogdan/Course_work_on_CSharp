@@ -446,8 +446,6 @@ namespace Course_work_on_CSharp
                     }
                 }
             }
-            
-
         }
         #endregion
         #region Реєстрація користувача
